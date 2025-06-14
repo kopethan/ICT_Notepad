@@ -1,6 +1,6 @@
-# 📈 ICT Trading Guide Tool
+# 🗒️ ICT_Notepad
 
-A personal web app to log, manage, and review ICT-style PD Arrays & Levels.  
+A personal web app to log, manage, and review ICT-style PD Arrays & Levels for trading.  
 All data is stored locally in a lightweight SQLite database. No cloud. Fast. Private. Yours.
 
 ---
@@ -15,42 +15,39 @@ Useful for traders following Smart Money Concepts (SMC) or ICT methodology.
 ## 🚀 Features
 
 ### 📁 PD Arrays
-- ➕ Add new PD Arrays (with name, session, notes, tags)
+- ➕ Add new PD Arrays (with name, session, notes, tags, color, and timeframes)
 - 📝 Edit or 🗑️ Delete existing PD Arrays
-- 📄 View all PD Arrays (with Tag filters)
-- 📑 Duplicate existing PD Arrays with all levels & tags
+- 📄 View all PD Arrays (with Tag filters and color preview)
+- 📑 Duplicate existing PD Arrays (future)
+- **Assign custom timeframes to each PD Array**
 
 ### 🧱 Levels
-- ➕ Add new levels manually or via template
-- 📋 View all levels in a PD Array
+- ➕ Add new levels (custom labels and types, supports bulk/comma entry)
+- 📋 View all levels in a PD Array (grouped by label and time)
 - 🧭 Search levels across all arrays
-- 🛠️ Edit/🗑️ Delete levels directly (inline in View mode)
-- 🛠️ Add levels by template (ex: Fibonacci, POI, etc.)
-- 🗑️ Delete levels by type (bulk delete)
+- 🛠️ Edit/🗑️ Delete levels directly
+- 🛠️ Add levels by template (e.g., Fibonacci, POI, etc.)
+- 🗑️ Delete levels by type (bulk delete, future)
 
 ### 🏷️ Tags
-- 🛠️ Manage tag list (create / delete)
+- 🛠️ Manage tag list (create/delete)
 - ✏️ Add/remove tags on each PD Array
 - 🧪 Filter PD Arrays by Tag
 
 ### 📦 Tools
-- 📤 Export PD Arrays to CSV/JSON
-- 📥 Import PD Arrays from CSV
-- 📊 Statistics (count, timeframe breakdown)
-- 🕒 Recent Activity view (last 10 levels)
+- 📤 Export PD Arrays/data to CSV/JSON (or full backup)
+- 📥 Import PD Arrays from CSV (optional)
+- 📊 Statistics and Recent Activity views
 
-## Last updated
+---
 
-- **Create and organize PD Arrays** with custom colors, tags, and sessions
-- **Define Levels** per PD Array (custom labels: High, Low, CE, etc.)
-- **Bulk log values** for all levels (fast entry, per session/day)
-- **Historical log:** every entry is timestamped and never overwritten
-- **View Level Entries:** grouped by date/time, all labels on one line
-- **Edit and duplicate PD Arrays**; manage tags and structure
-- **Import/export data** (CSV/JSON) for backup or analysis
-- **Filter/search** all your historical trading levels
-- **Basic stats and recent activity overview**
-- **Local-only:** all data stays on your device (uses SQLite)
+## 📊 How it Works
+
+- **Add PD Arrays** (with name, color, tags, session, and timeframes)
+- **Define Levels** (custom labels, types; add or edit at any time)
+- **Bulk manage values**: select a PD Array, input all level values, and save as a single timestamped entry
+- **View Level Entries**: grouped summary—each session shows all levels in one row with a timestamp
+- **Filter, search, and export your data anytime**
 
 ---
 
@@ -66,8 +63,8 @@ Useful for traders following Smart Money Concepts (SMC) or ICT methodology.
 
 ## 🗂️ Project Structure
 
-```
-ict\_trading\_guide\_tool/
+```bashj
+ICT\_Notepad/
 ├── app.py                  # Streamlit entrypoint
 ├── main.py                 # (optional) CLI
 ├── requirements.txt
@@ -75,6 +72,8 @@ ict\_trading\_guide\_tool/
 ├── instructions.md         # Features list & plan
 ├── db/
 │   └── trading\_guide.db
+├── backups/
+│   └── ... (optional, ignored by git)
 ├── app/
 │   ├── **init**.py
 │   ├── models.py           # SQLAlchemy models (PDArray, Level, LevelEntry, Tag)
@@ -84,6 +83,7 @@ ict\_trading\_guide\_tool/
 │   ├── tag.py              # Tags logic
 │   ├── import\_utils.py     # CSV import logic
 │   ├── export.py           # CSV/JSON export
+│   ├── stats.py            # Statistics and activity logic
 │   └── ...
 
 ```
@@ -92,10 +92,19 @@ ict\_trading\_guide\_tool/
 
 ## 🚀 Quick Start
 
+---
+
+> **Note:**  
+> The database (`db/trading_guide.db`) and `backups/` folder are created automatically when you first run the app—no manual setup needed!
+
+---
+
+**Quick Start**
+
 1. **Clone the repo:**
     ```bash
-    git clone https://github.com/kopethan/ict_trading_guide_tool.git
-    cd ict_trading_guide_tool
+    git clone https://github.com/kopethan/ICT_Notepad.git
+    cd ICT_Notepad
     ```
 
 2. **Install requirements:**
@@ -103,7 +112,8 @@ ict\_trading\_guide\_tool/
     pip install -r requirements.txt
     ```
 
-3. **Initialize the database:**
+3. **Initialize the database:**  
+   *(This is automatic! When you run the app, `db/trading_guide.db` and the `backups/` folder will be created if they don’t exist.)*
     ```bash
     python init_db.py
     ```
@@ -115,28 +125,20 @@ ict\_trading\_guide\_tool/
 
 ---
 
-## 📊 How it Works
-
-- **Add PD Arrays** (name, color, tags, session)
-- **Define Levels** (custom labels, types)
-- **Bulk manage values**: select PD Array, enter all level values, and save — a new session row is created
-- **View levels:** Each entry session shows on its own line with timestamp and all values
-- **Filter, search, and export your data anytime**
-
----
-
 ## 🧩 Why is this different?
 
 - All values are **logged historically**; nothing is overwritten
 - Easy to retrieve, filter, and export years of trading levels
-- **Local and private** by design
-- Clean, intuitive, and ready for future extension
+- **Local and private** by design (your data stays with you)
+- Clean, intuitive UI, ready for extension
 
 ---
 
 ## 📝 License
 
-MIT License (or add your license here)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+This project is licensed under the [MIT License](LICENSE).
 
 ---
 
@@ -148,7 +150,7 @@ Kopethan Arudshelvan (and OpenAI ChatGPT)
 
 ## 🤝 Contribute / Support
 
-- Open an issue or PR if you want to improve the tool!
+- Open an issue or PR to help improve ICT_Notepad!
 - Suggestions and feedback are always welcome.
 
 ---
