@@ -20,8 +20,6 @@ import app.tag as tag_utils
 import pandas as pd
 from datetime import date
 from app import backup as backup_utils
-
-import os
 from app.models import Base
 from app import engine
 
@@ -167,11 +165,39 @@ elif menu == "📝 Edit PD Array":
         new_notes = st.text_area("Notes", value=pd_array.notes)
         new_color = st.color_picker("PD Array Color", value=pd_array.color or "#33C1FF")
         new_timeframes = st.text_input("Timeframes (comma separated)", value=pd_array.timeframes or "")
-
         existing_tags = [tag.name for tag in pd_array.tags]
         all_tags = tag_utils.list_tags(session)
         all_tag_names = sorted([tag.name for tag in all_tags])
         selected_tags = st.multiselect("Tags", all_tag_names, default=existing_tags)
+
+        # ----- Save / Delete buttons (just after PD Array info)
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("💾 Save Changes"):
+                pd_array.name = new_name
+                pd_array.session = new_session
+                pd_array.notes = new_notes
+                pd_array.color = new_color
+                pd_array.timeframes = new_timeframes
+                pd_array.tags.clear()
+                for tag_name in selected_tags:
+                    tag = tag_utils.get_or_create_tag(session, tag_name)
+                    pd_array.tags.append(tag)
+                session.commit()
+                st.success("✅ PD Array info saved!")
+                st.rerun()
+        with col2:
+            confirm_delete = st.checkbox("Confirm deletion of this PD Array?")
+            if st.button("🗑️ Delete PD Array"):
+                if confirm_delete:
+                    session.delete(pd_array)
+                    session.commit()
+                    st.success("PD Array deleted.")
+                    st.rerun()
+                else:
+                    st.warning("Please check the confirmation box to delete the PD Array.")
+
+        st.markdown("---")
 
         # ✏️ Unified Levels Editor
         st.markdown("### ✏️ Edit Existing Levels (Labels & Type)")
@@ -191,6 +217,13 @@ elif menu == "📝 Edit PD Array":
                         st.warning(f"Deleted: {lvl.label}")
                         st.rerun()
                 modified_levels.append((lvl.id, label, ltype))
+            # Save any edits to existing levels
+            if st.button("Save Level Edits"):
+                for lvl_id, label, ltype in modified_levels:
+                    level_utils.edit_level(session, lvl_id, label=label.strip(), level_type=ltype.strip())
+                session.commit()
+                st.success("✅ Level edits saved!")
+                st.rerun()
         else:
             st.info("No levels defined for this PD Array yet.")
 
@@ -198,50 +231,27 @@ elif menu == "📝 Edit PD Array":
         st.markdown("### ➕ Add New Level(s)")
         new_level_labels_input = st.text_input("New Labels (comma-separated)", key="new_labels")
         new_level_type_input = st.text_input("New Level Type", key="new_type")
-
-        # 🔘 Action Buttons: Save + Delete
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("✅ Save All Changes"):
-                # Update PD Array fields
-                pd_array.name = new_name
-                pd_array.session = new_session
-                pd_array.notes = new_notes
-                pd_array.color = new_color
-                pd_array.timeframes = new_timeframes
-
-                # Update Tags
-                pd_array.tags.clear()
-                for tag_name in selected_tags:
-                    tag = tag_utils.get_or_create_tag(session, tag_name)
-                    pd_array.tags.append(tag)
-
-                # Update existing levels
-                for lvl_id, label, ltype in modified_levels:
-                    level_utils.edit_level(session, lvl_id, label=label.strip(), level_type=ltype.strip())
-
-                # Add new levels (if any)
-                if new_level_labels_input.strip() and new_level_type_input.strip():
-                    new_labels = [lbl.strip() for lbl in new_level_labels_input.split(",") if lbl.strip()]
-                    for label in new_labels:
-                        level_utils.add_level(session, pd_array_id, new_level_type_input.strip(), "", label, "")
-                    st.success(f"✅ Added {len(new_labels)} new level(s).")
-
+        if st.button("Add New Level(s)"):
+            labels = [lbl.strip() for lbl in new_level_labels_input.split(",") if lbl.strip()]
+            ltype = new_level_type_input.strip()
+            count = 0
+            if labels and ltype:
+                for label in labels:
+                    level_utils.add_level(session, pd_array_id, ltype, "", label, "")
+                    count += 1
+            elif labels:
+                for label in labels:
+                    level_utils.add_level(session, pd_array_id, "", "", label, "")
+                    count += 1
+            elif ltype:
+                level_utils.add_level(session, pd_array_id, ltype, "", "", "")
+                count += 1
+            if count > 0:
+                st.success(f"✅ Added {count} new level(s).")
                 session.commit()
-                st.success("✅ All changes saved.")
                 st.rerun()
-
-        with col2:
-            confirm_delete = st.checkbox("Confirm deletion of this PD Array?")
-            if st.button("🗑️ Delete PD Array"):
-                if confirm_delete:
-                    session.delete(pd_array)
-                    session.commit()
-                    st.success("PD Array deleted.")
-                    st.rerun()
-                else:
-                    st.warning("Please check the confirmation box to delete the PD Array.")
-
+            else:
+                st.warning("Please enter at least a label or a type to add new level(s).")
     else:
         st.warning("No PD Arrays found.")
 
@@ -368,6 +378,13 @@ elif menu == "📥 Bulk Manage Levels":
         selected_array = st.selectbox("Select PD Array", list(array_options.keys()))
         pd_array_id = array_options[selected_array]
         pd_array = session.query(pd_array_utils.PDArray).get(pd_array_id)
+
+        # --- Color bar preview here ---
+        st.markdown(
+            f"<span style='color:{pd_array.color}; font-size:30px;'>▌</span> "
+            f"<span style='font-size:16px;'>{pd_array.name}</span>",
+            unsafe_allow_html=True
+        )
 
         st.markdown(f"**Session:** {pd_array.session}")
         st.markdown(f"**Level Type:** {', '.join(set([lvl.level_type for lvl in pd_array.levels]))}")
