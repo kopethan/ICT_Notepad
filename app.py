@@ -678,5 +678,3 @@ elif menu == "📦 Tools":
                 f.write(uploaded_file.getbuffer())
             backup_utils.import_full_backup(session, "temp_restore.json")
             st.success("Backup restored into the database.")
-
-#test
