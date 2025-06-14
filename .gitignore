@@ -22,7 +22,7 @@ backups/
 
 # Streamlit
 .streamlit/
-.temp_restore.json
+temp_restore.json
 
 # VSCode project settings
 .vscode/
