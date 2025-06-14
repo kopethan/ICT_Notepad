@@ -12,7 +12,7 @@ import os
 from app.models import Base
 from app import engine
 
-# Ensure db folder exists
+# Ensure 'db/' folder exists
 if not os.path.exists("db"):
     os.makedirs("db")
     print("📁 'db/' folder created.")
@@ -22,6 +22,11 @@ if not os.path.exists("db/trading_guide.db"):
     print("🛠️ Database not found. Creating...")
     Base.metadata.create_all(engine)
     print("✅ Database created.")
+
+# Ensure 'backups/' folder exists
+if not os.path.exists("backups"):
+    os.makedirs("backups")
+    print("📁 'backups/' folder created.")
 
 def add_pd_array(session):
     name = input("Enter PD Array name: ")
