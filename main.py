@@ -12,10 +12,16 @@ import os
 from app.models import Base
 from app import engine
 
-# Ensure DB is created if missing
+# Ensure db folder exists
+if not os.path.exists("db"):
+    os.makedirs("db")
+    print("📁 'db/' folder created.")
+
+# Ensure database file exists
 if not os.path.exists("db/trading_guide.db"):
     print("🛠️ Database not found. Creating...")
     Base.metadata.create_all(engine)
+    print("✅ Database created.")
 
 def add_pd_array(session):
     name = input("Enter PD Array name: ")
