@@ -21,17 +21,6 @@ def add_level(session, pd_array_id, level_type, value, timeframe, label, notes):
     session.commit()
     return new_level
 
-def add_level_entry(session, level_id, value, note=""):
-    entry = LevelEntry(
-        level_id=level_id,
-        value=value,
-        note=note,
-        timestamp=datetime.utcnow()
-    )
-    session.add(entry)
-    session.commit()
-    return entry
-
 def list_levels(session, pd_array_id):
     return session.query(Level).filter(Level.pd_array_id == pd_array_id).all()
 
@@ -73,3 +62,17 @@ def delete_levels_by_type(session, pd_array_id, level_type_to_delete):
 
 def get_latest_level_entry(session, level_id):
     return session.query(LevelEntry).filter_by(level_id=level_id).order_by(LevelEntry.timestamp.desc()).first()
+
+def add_level_entry(session, level_id, value, note):
+    from .models import LevelEntry
+    from datetime import datetime
+
+    entry = LevelEntry(
+        level_id=level_id,
+        value=value,
+        note=note,
+        timestamp=datetime.now()
+    )
+    session.add(entry)
+    session.commit()
+    return entry

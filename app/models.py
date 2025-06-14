@@ -50,7 +50,6 @@ class Level(Base):
     pd_array_id = Column(Integer, ForeignKey('pd_arrays.id'))
     level_type = Column(String)
     value = Column(String)  # We use String → can store "1.2345" or "10:30"
-    timeframe = Column(String)
     label = Column(String)
     notes = Column(Text)
 

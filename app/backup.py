@@ -2,8 +2,6 @@ import json
 import os
 from datetime import datetime
 from app.models import PDArray, Level, LevelEntry, Tag
-from app.models import PDArray, Level, LevelEntry, Tag
-from datetime import datetime
 
 def export_full_backup(session, folder="backups"):
     os.makedirs(folder, exist_ok=True)
@@ -12,10 +10,12 @@ def export_full_backup(session, folder="backups"):
         "tags": [],
     }
 
+    # Export all tags
     tags = session.query(Tag).all()
     for tag in tags:
         data["tags"].append({"id": tag.id, "name": tag.name})
 
+    # Export PD Arrays and their levels
     arrays = session.query(PDArray).all()
     for array in arrays:
         array_data = {
@@ -28,19 +28,24 @@ def export_full_backup(session, folder="backups"):
             "tags": [tag.name for tag in array.tags],
             "levels": []
         }
+
         for lvl in array.levels:
             lvl_data = {
                 "label": lvl.label,
                 "level_type": lvl.level_type,
                 "value": lvl.value,
-                "timeframe": lvl.timeframe,
                 "notes": lvl.notes,
                 "entries": [
-                    {"value": e.value, "note": e.note, "timestamp": e.timestamp.isoformat()}
+                    {
+                        "value": e.value,
+                        "note": e.note,
+                        "timestamp": e.timestamp.isoformat()
+                    }
                     for e in lvl.entries
                 ]
             }
             array_data["levels"].append(lvl_data)
+
         data["pd_arrays"].append(array_data)
 
     filename = os.path.join(folder, f"full_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
@@ -48,6 +53,7 @@ def export_full_backup(session, folder="backups"):
         json.dump(data, f, indent=4)
 
     return filename
+
 
 def import_full_backup(session, filepath):
     with open(filepath, "r", encoding="utf-8") as f:
@@ -86,7 +92,6 @@ def import_full_backup(session, filepath):
                 label=lvl_data["label"],
                 level_type=lvl_data["level_type"],
                 value=lvl_data["value"],
-                timeframe=lvl_data["timeframe"],
                 notes=lvl_data["notes"]
             )
             session.add(lvl)

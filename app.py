@@ -61,9 +61,9 @@ menu = st.sidebar.radio("📋 Menu", [
     "🧱 Levels",
     "📋 View Levels",
     "📥 Bulk Manage Levels",
+    "🧾 Edit Level Entries",
     "🧭 Search Levels",
     "🛠️ Edit Levels Template",
-    "🗑️ Delete Levels Template",
     "---",
     "🏷️ Tags",
     "🛠️ Manage Tags",
@@ -80,7 +80,7 @@ menu = st.sidebar.radio("📋 Menu", [
 if menu == "➕ Add PD Array":
     st.header("➕ Add New PD Array")
     name = st.text_input("Name")
-    session_name = st.selectbox("Session", ["London", "NY", "Asia"])
+    session_name = st.selectbox("Session", ["London", "NY", "Asia", "All", "Other"])
     notes = st.text_area("Notes")
     color = st.color_picker("PD Array Color", "#33C1FF")
     tag_input = st.text_input("Tags (comma separated)", value="")
@@ -90,86 +90,158 @@ if menu == "➕ Add PD Array":
     if add_levels_now:
         levels_level_type = st.text_input("Levels' Level Type (ex: POI, Liquidity, FVG, etc.)")
         levels_labels_input = st.text_input("Levels Labels (comma separated, ex: High, Low, CE or 0.25, 0.5, 0.75, 1.0)")
-        levels_timeframe = st.text_input("Levels' Timeframe", value="1h")
 
     if st.button("Add PD Array"):
-        new_array = pd_array_utils.add_pd_array(session, name, session_name, notes, color, timeframes_input)
-        tags_list = [tag.strip() for tag in tag_input.split(",") if tag.strip()]
-        for tag_name in tags_list:
-            tag = tag_utils.get_or_create_tag(session, tag_name)
-            new_array.tags.append(tag)
-        session.commit()
-        st.success(f"PD Array '{new_array.name}' added with tags: {', '.join(tags_list)}")
+        # ✅ Check if a PD Array with the same name already exists
+        existing_array = session.query(pd_array_utils.PDArray).filter_by(name=name).first()
+        if existing_array:
+            st.warning(f"A PD Array with the name '{name}' already exists. Please choose a different name.")
+        else:
+            new_array = pd_array_utils.add_pd_array(session, name, session_name, notes, color, timeframes_input)
+            tags_list = [tag.strip() for tag in tag_input.split(",") if tag.strip()]
+            for tag_name in tags_list:
+                tag = tag_utils.get_or_create_tag(session, tag_name)
+                new_array.tags.append(tag)
+            session.commit()
+            st.success(f"PD Array '{new_array.name}' added with tags: {', '.join(tags_list)}")
 
-        # Auto-create Levels if requested
-        if add_levels_now:
-            levels_labels = [label.strip() for label in levels_labels_input.split(",") if label.strip()]
-            for level_label in levels_labels:
-                level_utils.add_level(session, new_array.id, levels_level_type, "", levels_timeframe, level_label, "")
-            st.success(f"Added {len(levels_labels)} Levels to PD Array '{new_array.name}'.")
+            # Auto-create Levels if requested
+            if add_levels_now:
+                levels_labels = [label.strip() for label in levels_labels_input.split(",") if label.strip()]
+                for level_label in levels_labels:
+                                level_utils.add_level(session, new_array.id, levels_level_type, "", level_label, "")
+                st.success(f"Added {len(levels_labels)} Levels to PD Array '{new_array.name}'.")
 
 # 2️⃣ View PD Arrays
 elif menu == "📄 View PD Arrays":
     st.header("📋 View PD Arrays")
+
     tags = tag_utils.list_tags(session)
     tag_options = ["All"] + [tag.name for tag in tags]
     selected_tag = st.selectbox("Filter by Tag", tag_options)
+
+    # Fetch arrays
     if selected_tag == "All":
         pd_arrays = pd_array_utils.list_pd_arrays(session)
     else:
         pd_arrays = tag_utils.list_pd_arrays_by_tag(session, selected_tag)
-    data = []
-    for array in pd_arrays:
-        color_bar = f"<span style='color:{array.color}'>▌</span>" if array.color else ""
-        name_with_color = f"{color_bar} {array.name}"
-        array_tags = ", ".join([tag.name for tag in array.tags])
-        data.append([array.id, name_with_color, array.session, array.date, array.notes, array_tags])
 
-    df = pd.DataFrame(data, columns=["ID", "Name", "Session", "Date", "Notes", "Tags"]) 
-    st.markdown(df.to_html(escape=False, index=False), unsafe_allow_html=True)
+    if not pd_arrays:
+        st.info("No PD Arrays found.")
+    else:
+        table_rows = []
+        for array in pd_arrays:
+            color_icon = f"<span style='color:{array.color}'>▌</span>" if array.color else ""
+            array_tags = ", ".join([tag.name for tag in array.tags])
+            level_count = len(array.levels)
 
+            table_rows.append([
+                array.id,
+                f"{color_icon} <strong>{array.name}</strong>",
+                array.session,
+                array.date.strftime("%Y-%m-%d") if array.date else "",
+                f"{array.notes or ''}",
+                array_tags,
+                f"{level_count} level{'s' if level_count != 1 else ''}",
+            ])
+
+        df = pd.DataFrame(table_rows, columns=["ID", "Name", "Session", "Date", "Notes", "Tags", "Levels"])
+        st.markdown(df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
 # 3️⃣ Edit / Delete PD Array
 elif menu == "📝 Edit PD Array":
     st.header("✏️ Edit / Delete PD Array")
     pd_arrays = pd_array_utils.list_pd_arrays(session)
     array_options = {f"{array.id} - {array.name} ({array.date})": array.id for array in pd_arrays}
+
     if array_options:
         selected_array = st.selectbox("Select PD Array to edit", list(array_options.keys()))
         pd_array_id = array_options[selected_array]
         pd_array = session.query(pd_array_utils.PDArray).get(pd_array_id)
+
+        # 🧾 PD Array Info
         new_name = st.text_input("PD Array Name", value=pd_array.name)
-        new_session = st.selectbox("Session", ["London", "NY", "Asia"], index=["London", "NY", "Asia"].index(pd_array.session) if pd_array.session in ["London", "NY", "Asia"] else 0)
+        session_options = ["London", "NY", "Asia", "All", "Other"]
+        new_session = st.selectbox("Session", session_options,
+                                   index=session_options.index(pd_array.session) if pd_array.session in session_options else 0)
         new_notes = st.text_area("Notes", value=pd_array.notes)
         new_color = st.color_picker("PD Array Color", value=pd_array.color or "#33C1FF")
         new_timeframes = st.text_input("Timeframes (comma separated)", value=pd_array.timeframes or "")
+
         existing_tags = [tag.name for tag in pd_array.tags]
         all_tags = tag_utils.list_tags(session)
         all_tag_names = sorted([tag.name for tag in all_tags])
         selected_tags = st.multiselect("Tags", all_tag_names, default=existing_tags)
+
+        # ✏️ Unified Levels Editor
+        st.markdown("### ✏️ Edit Existing Levels (Labels & Type)")
+        existing_levels = level_utils.list_levels(session, pd_array_id)
+        modified_levels = []
+
+        if existing_levels:
+            for lvl in existing_levels:
+                col1, col2, col3 = st.columns([3, 3, 1])
+                with col1:
+                    label = st.text_input("Label", value=lvl.label, key=f"label_{lvl.id}")
+                with col2:
+                    ltype = st.text_input("Type", value=lvl.level_type, key=f"type_{lvl.id}")
+                with col3:
+                    if st.button("🗑️", key=f"delete_{lvl.id}"):
+                        level_utils.delete_level(session, lvl.id)
+                        st.warning(f"Deleted: {lvl.label}")
+                        st.rerun()
+                modified_levels.append((lvl.id, label, ltype))
+        else:
+            st.info("No levels defined for this PD Array yet.")
+
+        # ➕ Add New Level(s)
+        st.markdown("### ➕ Add New Level(s)")
+        new_level_labels_input = st.text_input("New Labels (comma-separated)", key="new_labels")
+        new_level_type_input = st.text_input("New Level Type", key="new_type")
+
+        # 🔘 Action Buttons: Save + Delete
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("Save Changes"):
+            if st.button("✅ Save All Changes"):
+                # Update PD Array fields
                 pd_array.name = new_name
                 pd_array.session = new_session
                 pd_array.notes = new_notes
                 pd_array.color = new_color
                 pd_array.timeframes = new_timeframes
+
+                # Update Tags
                 pd_array.tags.clear()
                 for tag_name in selected_tags:
                     tag = tag_utils.get_or_create_tag(session, tag_name)
                     pd_array.tags.append(tag)
+
+                # Update existing levels
+                for lvl_id, label, ltype in modified_levels:
+                    level_utils.edit_level(session, lvl_id, label=label.strip(), level_type=ltype.strip())
+
+                # Add new levels (if any)
+                if new_level_labels_input.strip() and new_level_type_input.strip():
+                    new_labels = [lbl.strip() for lbl in new_level_labels_input.split(",") if lbl.strip()]
+                    for label in new_labels:
+                        level_utils.add_level(session, pd_array_id, new_level_type_input.strip(), "", label, "")
+                    st.success(f"✅ Added {len(new_labels)} new level(s).")
+
                 session.commit()
-                st.success("PD Array updated!")
+                st.success("✅ All changes saved.")
+                st.rerun()
+
         with col2:
             confirm_delete = st.checkbox("Confirm deletion of this PD Array?")
-            if st.button("Delete PD Array"):
+            if st.button("🗑️ Delete PD Array"):
                 if confirm_delete:
                     session.delete(pd_array)
                     session.commit()
-                    st.success("PD Array deleted!")
+                    st.success("PD Array deleted.")
+                    st.rerun()
                 else:
                     st.warning("Please check the confirmation box to delete the PD Array.")
+
     else:
         st.warning("No PD Arrays found.")
 
@@ -212,10 +284,11 @@ elif menu == "📋 View Levels":
     # --- FILTERS ---
     all_levels = session.query(level_utils.Level).all()
     level_types_all = sorted(set([lvl.level_type for lvl in all_levels if lvl.level_type]))
-    timeframes_all = sorted(set([lvl.timeframe for lvl in all_levels if lvl.timeframe]))
+    timeframes_all = []
+
 
     selected_level_type = st.selectbox("Filter Level Type", ["All"] + level_types_all)
-    selected_timeframe = st.selectbox("Filter Timeframe", ["All"] + timeframes_all)
+    selected_timeframe = "All"
 
     pd_arrays = pd_array_utils.list_pd_arrays(session)
 
@@ -225,7 +298,6 @@ elif menu == "📋 View Levels":
         levels = [
             lvl for lvl in levels
             if (selected_level_type == "All" or lvl.level_type == selected_level_type)
-            and (selected_timeframe == "All" or lvl.timeframe == selected_timeframe)
         ]
         if not levels:
             continue
@@ -261,6 +333,11 @@ elif menu == "📋 View Levels":
             summary_line = " • ".join([
                 f"{label} ({values.get(label, '-')})" for label in label_list
             ])
+
+            # Find the note from one of the entries (assume shared)
+            entry_notes = [e.note for lvl in levels for e in lvl.entries if e.timestamp.replace(microsecond=0) == ts]
+            entry_note = next((n for n in entry_notes if n), "")
+
             st.markdown(
                 f"""
                 <div style='border-left: 6px solid {color}; padding: 0.75em 1em; margin-bottom: 0.5em; background-color: rgba(255,255,255,0.02); border-radius: 6px;'>
@@ -271,7 +348,8 @@ elif menu == "📋 View Levels":
                         <div style='margin-top: 8px;'>
                             <p><strong>Session:</strong> {pd_array.session}</p>
                             <p><strong>Tags:</strong> {', '.join([tag.name for tag in pd_array.tags])}</p>
-                            {"<p><strong>Notes:</strong> " + html.escape(pd_array.notes) + "</p>" if pd_array.notes else ""}
+                            {"<p><strong>PD Array Notes:</strong> " + html.escape(pd_array.notes) + "</p>" if pd_array.notes else ""}
+                            {"<p><strong>Entry Notes:</strong> " + html.escape(entry_note) + "</p>" if entry_note else ""}
                         </div>
                     </details>
                 </div>
@@ -303,7 +381,7 @@ elif menu == "📥 Bulk Manage Levels":
         st.markdown("### Enter Values for Each Level Label")
         level_inputs = {}
         for lvl in levels:
-            level_inputs[lvl.id] = st.text_input(f"{lvl.label}:", key=f"entry_{lvl.id}")
+            level_inputs[lvl.id] = st.text_input(f"**{lvl.label}**", key=f"entry_{lvl.id}")
 
         note = st.text_area("Note (optional)", key="bulk_note")
 
@@ -312,85 +390,145 @@ elif menu == "📥 Bulk Manage Levels":
                 value = level_inputs.get(lvl.id, "").strip()
                 if value:
                     level_utils.add_level_entry(session, lvl.id, value, note)
-                    if lvl.timeframe != selected_timeframe:
-                        lvl.timeframe = selected_timeframe  # Update timeframe if changed
             session.commit()
             st.success("Level entries saved!")
     else:
         st.warning("No PD Arrays found. Please add one.")
 
-# 6️⃣ Search Levels
+# 7️⃣ Search Levels
 elif menu == "🧭 Search Levels":
     st.header("🔎 Search Levels")
-    query = st.text_input("Search query (Level Type / Label / Timeframe)")
+    query = st.text_input("Search query (Level Type / Label / Notes)")
     all_levels = search_utils.search_levels(session, query if query else "")
+    
+    # Collect unique level types for filter
     level_types = sorted(list(set([lvl.level_type for lvl in all_levels if lvl.level_type])))
-    timeframes = sorted(list(set([lvl.timeframe for lvl in all_levels if lvl.timeframe])))
     selected_level_type = st.selectbox("Filter Level Type", ["All"] + level_types)
-    selected_timeframe = st.selectbox("Filter Timeframe", ["All"] + timeframes)
+    
     if st.button("Search"):
         filtered_levels = []
         for lvl in all_levels:
             if (selected_level_type != "All" and lvl.level_type != selected_level_type):
                 continue
-            if (selected_timeframe != "All" and lvl.timeframe != selected_timeframe):
-                continue
             filtered_levels.append(lvl)
+        
         data = []
         for lvl in filtered_levels:
-            data.append([lvl.id, lvl.level_type, lvl.value, lvl.timeframe, lvl.label, lvl.notes, lvl.pd_array_id])
-        df = pd.DataFrame(data, columns=["ID", "Level Type", "Value", "Timeframe", "Label", "Notes", "PD Array ID"])
+            data.append([
+                lvl.id,
+                lvl.level_type,
+                lvl.value,
+                lvl.label,
+                lvl.notes,
+                lvl.pd_array_id
+            ])
+        df = pd.DataFrame(data, columns=["ID", "Level Type", "Value", "Label", "Notes", "PD Array ID"])
         st.dataframe(df)
 
-# 7️⃣ Edit Levels Template
+# 8️⃣ Edit Levels Template
 elif menu == "🛠️ Edit Levels Template":
     st.header("🛠️ Edit Levels Template")
     pd_arrays = pd_array_utils.list_pd_arrays(session)
     array_options = {f"{array.id} - {array.name} ({array.date})": array.id for array in pd_arrays}
+    
     if array_options:
         selected_array = st.selectbox("Select PD Array", list(array_options.keys()))
         pd_array_id = array_options[selected_array]
         pd_array = session.query(pd_array_utils.PDArray).get(pd_array_id)
-        # Parse timeframes stored in PD Array (comma-separated)
+
         tf_list = [tf.strip() for tf in (pd_array.timeframes or "").split(",") if tf.strip()]
         existing_levels = level_utils.list_levels(session, pd_array_id)
-        existing_labels = [lvl.label for lvl in existing_levels]
-        if existing_labels:
-            st.markdown(f"**Existing Levels:** {', '.join(existing_labels)}")
+
+        st.subheader("📋 Existing Levels")
+        if existing_levels:
+            for lvl in existing_levels:
+                col1, col2, col3, col4 = st.columns([4, 2, 1, 1])
+                with col1:
+                    st.markdown(f"- **{lvl.label}** | _{lvl.level_type}_")
+                with col2:
+                    if st.button(f"🗑️ Delete", key=f"delete_{lvl.id}"):
+                        st.session_state[f"confirm_delete_{lvl.id}"] = True
+                with col3:
+                    if st.session_state.get(f"confirm_delete_{lvl.id}"):
+                        if st.button("✔️ Confirm", key=f"confirm_{lvl.id}"):
+                            level_utils.delete_level(session, lvl.id)
+                            st.success(f"Deleted level: {lvl.label}")
+                            st.rerun()
+                with col4:
+                    if st.session_state.get(f"confirm_delete_{lvl.id}"):
+                        if st.button("✖️ Cancel", key=f"cancel_{lvl.id}"):
+                            st.session_state[f"confirm_delete_{lvl.id}"] = False
         else:
             st.info("No Levels currently defined for this PD Array.")
-        st.subheader("➕ Add new Levels Template")
+
+        st.divider()
+        st.subheader("➕ Add New Levels Template")
         levels_level_type = st.text_input("Levels' Level Type (ex: POI, Liquidity, FVG, etc.)")
-        levels_labels_input = st.text_input("Levels Labels (comma separated, ex: High, Low, CE or 0.25, 0.5, 0.75, 1.0)")
-        levels_timeframe = st.text_input("Levels' Timeframe", value="1h")
+        levels_labels_input = st.text_input("Levels Labels (comma separated, e.g., High, Low, CE)")
+
         if st.button("Add Levels Template"):
             levels_labels = [label.strip() for label in levels_labels_input.split(",") if label.strip()]
             for level_label in levels_labels:
-                level_utils.add_level(session, pd_array_id, levels_level_type, "", levels_timeframe, level_label, "")
+                level_utils.add_level(session, pd_array_id, levels_level_type, "", level_label, "")
             st.success(f"Added {len(levels_labels)} Levels to PD Array '{pd_array.name}'.")
+            st.rerun()
+
     else:
         st.warning("No PD Arrays found.")
 
-# 8️⃣ Delete Levels Template
-elif menu == "🗑️ Delete Levels Template":
-    st.header("🗑️ Delete Levels Template (by Level Type)")
+# 8️⃣.2 Edit Level Entries
+elif menu == "🧾 Edit Level Entries":
+    st.header("🧾 Edit Level Entries (Grouped by Timestamp)")
+
     pd_arrays = pd_array_utils.list_pd_arrays(session)
-    array_options = {f"{array.id} - {array.name} ({array.date})": array.id for array in pd_arrays}
-    if array_options:
-        selected_array = st.selectbox("Select PD Array", list(array_options.keys()))
-        pd_array_id = array_options[selected_array]
-        levels = level_utils.list_levels(session, pd_array_id)
-        existing_level_types = sorted(list(set([lvl.level_type for lvl in levels if lvl.level_type])))
-        if existing_level_types:
-            selected_level_type = st.selectbox("Select Level Type to delete", existing_level_types)
-            if st.button("Delete Levels of this Type"):
-                count_deleted = level_utils.delete_levels_by_type(session, pd_array_id, selected_level_type)
-                st.success(f"Deleted {count_deleted} Levels of type '{selected_level_type}' from PD Array.")
-        else:
-            st.info("No Levels in this PD Array.")
-    else:
-        st.warning("No PD Arrays found.")
+    for pd_array in pd_arrays:
+        levels = level_utils.list_levels(session, pd_array.id)
+        all_entries = []
+        for lvl in levels:
+            for entry in lvl.entries:
+                all_entries.append({
+                    "timestamp": entry.timestamp.replace(microsecond=0),
+                    "level_id": lvl.id,
+                    "entry_id": entry.id,
+                    "label": lvl.label,
+                    "value": entry.value,
+                    "note": entry.note,
+                    "entry_obj": entry
+                })
 
+        from collections import defaultdict
+        grouped_by_timestamp = defaultdict(list)
+        for e in all_entries:
+            grouped_by_timestamp[e["timestamp"]].append(e)
+
+        for ts, entries in sorted(grouped_by_timestamp.items(), key=lambda x: x[0], reverse=True):
+            with st.expander(f"🕒 {ts} — {pd_array.name} → {', '.join([f'{e['label']} ({e['value']})' for e in entries])}"):
+                shared_note = entries[0]["note"]  # assume all entries in same group have same note
+
+                # Editable values for each label
+                updated_values = {}
+                for e in entries:
+                    updated_values[e["entry_id"]] = st.text_input(f"{e['label']}", value=e["value"], key=f"val_{e['entry_id']}")
+
+                # Shared note (only one per group)
+                new_note = st.text_area("Shared Note", value=shared_note, key=f"note_{ts}")
+
+                # Save all
+                if st.button("💾 Save All Changes", key=f"save_group_{ts}"):
+                    for e in entries:
+                        new_val = updated_values[e["entry_id"]]
+                        e["entry_obj"].value = new_val
+                        e["entry_obj"].note = new_note  # update same note for all
+                    session.commit()
+                    st.success("✅ Entries updated.")
+
+                # Delete all
+                if st.button("🗑️ Delete Entire Entry Group", key=f"delete_group_{ts}"):
+                    for e in entries:
+                        session.delete(e["entry_obj"])
+                    session.commit()
+                    st.warning("❌ Entire entry group deleted.")
+                    st.rerun()
 # 9️⃣ Manage Tags
 elif menu == "🛠️ Manage Tags":
     st.header("🏷️ Manage Tags")
@@ -453,6 +591,7 @@ elif menu == "📤 Export PD Array":
     else:
         st.warning("No PD Arrays found.")
 
+# Import PD Array
 elif menu == "📥 Import PD Array":
     st.header("📥 Import PD Array from CSV")
     uploaded_file = st.file_uploader("Choose CSV file", type=["csv"])
@@ -465,26 +604,47 @@ elif menu == "📥 Import PD Array":
         new_array = import_utils.import_pd_array_from_csv(session, "temp_import.csv", name, session_name, notes)
         st.success(f"PD Array '{new_array.name}' imported.")
 
+# 9️⃣ Statistics
 elif menu == "📊 Statistics":
-    st.header("📊 Statistics")
+    st.header("📊 Statistics Dashboard")
     stats = stats_utils.get_basic_statistics(session)
-    st.metric("Total PD Arrays", stats["total_arrays"])
-    st.metric("Total Levels", stats["total_levels"])
-    data = []
-    for timeframe, count in stats["timeframe_counts"]:
-        data.append([timeframe, count])
-    df = pd.DataFrame(data, columns=["Timeframe", "Count"])
-    st.bar_chart(df.set_index("Timeframe"))
 
+    # Key metrics
+    col1, col2, col3 = st.columns(3)
+    col1.metric("PD Arrays", stats['total_pd_arrays'])
+    col2.metric("Levels", stats['total_levels'])
+    col3.metric("Level Entries", stats['total_entries'])
+
+    # Levels per PD Array chart
+    df_levels = pd.DataFrame(stats['levels_per_array'], columns=["PD Array", "Levels"])
+    if not df_levels.empty:
+        st.subheader("📊 Levels per PD Array")
+        st.bar_chart(df_levels.set_index("PD Array"))
+
+    # Most common Level Types
+    df_types = pd.DataFrame(stats['level_type_counts'], columns=["Level Type", "Count"])
+    if not df_types.empty:
+        st.subheader("🏷️ Level Types Usage")
+        st.bar_chart(df_types.set_index("Level Type"))
+
+    # Recent Activity (last 5 Level Entries)
+    from app.models import LevelEntry
+    recent_entries = session.query(LevelEntry).order_by(LevelEntry.timestamp.desc()).limit(5).all()
+    st.subheader("🕒 Recent Entries")
+    for entry in recent_entries:
+        st.markdown(f"- {entry.timestamp.strftime('%Y-%m-%d %H:%M:%S')} | Value: {entry.value} | Note: {entry.note or ''}")
+
+# Recent Activity
 elif menu == "🕒 Recent Activity":
     st.header("🕒 Recent Activity (Last 10 Levels)")
     levels = stats_utils.get_recent_levels(session, limit=10)
     data = []
     for lvl in levels:
-        data.append([lvl.id, lvl.level_type, lvl.value, lvl.timeframe, lvl.label, lvl.notes, lvl.pd_array_id])
-    df = pd.DataFrame(data, columns=["ID", "Level Type", "Value", "Timeframe", "Label", "Notes", "PD Array ID"])
+        data.append([lvl.id, lvl.level_type, lvl.value, lvl.label, lvl.notes, lvl.pd_array_id])
+    df = pd.DataFrame(data, columns=["ID", "Level Type", "Value", "Label", "Notes", "PD Array ID"])
     st.dataframe(df)
 
+# Tools: Backup / Restore
 elif menu == "📦 Tools":
     st.subheader("Backup / Restore")
     col1, col2 = st.columns(2)
