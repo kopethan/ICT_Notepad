@@ -19,6 +19,16 @@ from app import stats as stats_utils
 import app.tag as tag_utils
 import pandas as pd
 from datetime import date
+from app import backup as backup_utils
+
+import os
+from app.models import Base
+from app import engine
+
+# Ensure DB is created if missing
+if not os.path.exists("db/trading_guide.db"):
+    print("🛠️ Database not found. Creating...")
+    Base.metadata.create_all(engine)
 
 # DB setup
 DB_PATH = 'db/trading_guide.db'
@@ -63,6 +73,7 @@ if menu == "➕ Add PD Array":
     notes = st.text_area("Notes")
     color = st.color_picker("PD Array Color", "#33C1FF")
     tag_input = st.text_input("Tags (comma separated)", value="")
+    timeframes_input = st.text_input("Timeframes (comma separated, e.g., 1m, 5m, 15m)", value="1h")
 
     add_levels_now = st.checkbox("Define Levels now for this PD Array?")
     if add_levels_now:
@@ -71,7 +82,7 @@ if menu == "➕ Add PD Array":
         levels_timeframe = st.text_input("Levels' Timeframe", value="1h")
 
     if st.button("Add PD Array"):
-        new_array = pd_array_utils.add_pd_array(session, name, session_name, notes, color)
+        new_array = pd_array_utils.add_pd_array(session, name, session_name, notes, color, timeframes_input)
         tags_list = [tag.strip() for tag in tag_input.split(",") if tag.strip()]
         for tag_name in tags_list:
             tag = tag_utils.get_or_create_tag(session, tag_name)
@@ -120,6 +131,7 @@ elif menu == "📝 Edit PD Array":
         new_session = st.selectbox("Session", ["London", "NY", "Asia"], index=["London", "NY", "Asia"].index(pd_array.session) if pd_array.session in ["London", "NY", "Asia"] else 0)
         new_notes = st.text_area("Notes", value=pd_array.notes)
         new_color = st.color_picker("PD Array Color", value=pd_array.color or "#33C1FF")
+        new_timeframes = st.text_input("Timeframes (comma separated)", value=pd_array.timeframes or "")
         existing_tags = [tag.name for tag in pd_array.tags]
         all_tags = tag_utils.list_tags(session)
         all_tag_names = sorted([tag.name for tag in all_tags])
@@ -131,6 +143,7 @@ elif menu == "📝 Edit PD Array":
                 pd_array.session = new_session
                 pd_array.notes = new_notes
                 pd_array.color = new_color
+                pd_array.timeframes = new_timeframes
                 pd_array.tags.clear()
                 for tag_name in selected_tags:
                     tag = tag_utils.get_or_create_tag(session, tag_name)
@@ -255,7 +268,7 @@ elif menu == "📋 View Levels":
                 unsafe_allow_html=True
             )
 
-# Bulk Manage Levels
+# 📥 Bulk Manage Levels
 elif menu == "📥 Bulk Manage Levels":
     st.header("📥 Bulk Manage Levels")
 
@@ -269,7 +282,10 @@ elif menu == "📥 Bulk Manage Levels":
 
         st.markdown(f"**Session:** {pd_array.session}")
         st.markdown(f"**Level Type:** {', '.join(set([lvl.level_type for lvl in pd_array.levels]))}")
-        st.markdown(f"**Timeframe:** {', '.join(set([lvl.timeframe for lvl in pd_array.levels]))}")
+
+        # Parse and display available timeframes
+        tf_list = [tf.strip() for tf in (pd_array.timeframes or "").split(",") if tf.strip()]
+        selected_timeframe = st.selectbox("Select Timeframe for this entry", tf_list or ["1h"])
 
         levels = level_utils.list_levels_by_pd_array_id(session, pd_array_id)
 
@@ -285,6 +301,9 @@ elif menu == "📥 Bulk Manage Levels":
                 value = level_inputs.get(lvl.id, "").strip()
                 if value:
                     level_utils.add_level_entry(session, lvl.id, value, note)
+                    if lvl.timeframe != selected_timeframe:
+                        lvl.timeframe = selected_timeframe  # Update timeframe if changed
+            session.commit()
             st.success("Level entries saved!")
     else:
         st.warning("No PD Arrays found. Please add one.")
@@ -321,6 +340,8 @@ elif menu == "🛠️ Edit Levels Template":
         selected_array = st.selectbox("Select PD Array", list(array_options.keys()))
         pd_array_id = array_options[selected_array]
         pd_array = session.query(pd_array_utils.PDArray).get(pd_array_id)
+        # Parse timeframes stored in PD Array (comma-separated)
+        tf_list = [tf.strip() for tf in (pd_array.timeframes or "").split(",") if tf.strip()]
         existing_levels = level_utils.list_levels(session, pd_array_id)
         existing_labels = [lvl.label for lvl in existing_levels]
         if existing_labels:
@@ -452,3 +473,20 @@ elif menu == "🕒 Recent Activity":
         data.append([lvl.id, lvl.level_type, lvl.value, lvl.timeframe, lvl.label, lvl.notes, lvl.pd_array_id])
     df = pd.DataFrame(data, columns=["ID", "Level Type", "Value", "Timeframe", "Label", "Notes", "PD Array ID"])
     st.dataframe(df)
+
+elif menu == "📦 Tools":
+    st.subheader("Backup / Restore")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("📤 Backup All Data"):
+            filename = backup_utils.export_full_backup(session)
+            st.success(f"Backup saved as `{filename}`")
+
+    with col2:
+        uploaded_file = st.file_uploader("📥 Restore from JSON", type=["json"])
+        if uploaded_file and st.button("Restore Backup"):
+            with open("temp_restore.json", "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            backup_utils.import_full_backup(session, "temp_restore.json")
+            st.success("Backup restored into the database.")

@@ -34,6 +34,7 @@ class PDArray(Base):
     date = Column(Date)
     notes = Column(Text)
     color = Column(String, nullable=True)
+    timeframes = Column(String)  # Store comma-separated timeframes like "1m, 5m, 15m"
 
     levels = relationship("Level", back_populates="pd_array", cascade="all, delete-orphan")
     tags = relationship(

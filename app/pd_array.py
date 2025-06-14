@@ -1,8 +1,14 @@
 from app.models import PDArray
 from datetime import date
 
-def add_pd_array(session, name, session_name, notes="", color=None):
-    new_array = PDArray(name=name, session=session_name, notes=notes, color=color)
+def add_pd_array(session, name, session_name, notes="", color=None, timeframes="1h"):
+    new_array = PDArray(
+        name=name,
+        session=session_name,
+        notes=notes,
+        color=color,
+        timeframes=timeframes  # NEW
+    )
     session.add(new_array)
     session.commit()
     return new_array

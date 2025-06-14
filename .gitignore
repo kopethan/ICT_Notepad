@@ -1,26 +1,32 @@
-# Python
+# Python cache & compiled files
 __pycache__/
 *.py[cod]
-*.sqlite3
-*.db
-*.log
-*.env
-*.egg-info/
-.env.*
-
-# VSCode
-.vscode/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Streamlit cache
-.streamlit/
-
-# Compiled files
 *.pyo
 *.pyd
+*.egg-info/
 
-# Ignore SQLite DB
-db/trading_guide.db
+# Python environment & config
+*.env
+.env.*
+*.log
+
+# SQLite databases
+*.sqlite3
+*.db
+db/
+!db/.gitkeep  # keep folder structure without the DB file
+
+# Backup files
+backups/
+!backups/.gitkeep  # keep folder structure without backup content
+
+# Streamlit
+.streamlit/
+.temp_restore.json
+
+# VSCode project settings
+.vscode/
+
+# OS system files
+.DS_Store
+Thumbs.db
