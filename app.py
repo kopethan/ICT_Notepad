@@ -24,7 +24,6 @@ from app import backup as backup_utils
 import os
 from app.models import Base
 from app import engine
-# test
 
 # Ensure 'db/' folder exists
 if not os.path.exists("db"):
