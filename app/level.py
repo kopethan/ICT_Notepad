@@ -7,6 +7,20 @@ from sqlalchemy.orm import Session
 from .models import LevelEntry
 from datetime import datetime
 
+def add_level(session, pd_array_id, level_type, value, timeframe, label, notes):
+    from .models import Level
+    new_level = Level(
+        pd_array_id=pd_array_id,
+        level_type=level_type,
+        value=value,
+        timeframe=timeframe,
+        label=label,
+        notes=notes
+    )
+    session.add(new_level)
+    session.commit()
+    return new_level
+
 def add_level_entry(session, level_id, value, note=""):
     entry = LevelEntry(
         level_id=level_id,
