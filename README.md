@@ -17,37 +17,38 @@ Useful for traders following Smart Money Concepts (SMC) or ICT methodology.
 ### 📁 PD Arrays
 - ➕ Add new PD Arrays (with name, session, notes, tags, color, and timeframes)
 - 📝 Edit or 🗑️ Delete existing PD Arrays
-- 📄 View all PD Arrays (with Tag filters and color preview)
-- 📑 Duplicate existing PD Arrays (future)
+- 📄 View all PD Arrays (with tag filters and color preview)
 - **Assign custom timeframes to each PD Array**
 
 ### 🧱 Levels
-- ➕ Add new levels (custom labels and types, supports bulk/comma entry)
-- 📋 View all levels in a PD Array (grouped by label and time)
-- 🧭 Search levels across all arrays
-- 🛠️ Edit/🗑️ Delete levels directly
-- 🛠️ Add levels by template (e.g., Fibonacci, POI, etc.)
-- 🗑️ Delete levels by type (bulk delete, future)
+- ➕ Add levels (custom labels and types, bulk input supported)
+- 📋 View all saved level entries (grouped by timestamp)
+- 🧾 Edit saved level entries (all values in one session)
+- 🛠️ Edit/🗑️ Delete individual levels
+- 💾 Save bulk values for each PD Array session
+- 🧹 Filter entries by level type, label, date, price, and timeframe (fully combined)
 
 ### 🏷️ Tags
 - 🛠️ Manage tag list (create/delete)
 - ✏️ Add/remove tags on each PD Array
-- 🧪 Filter PD Arrays by Tag
+- 🧪 Filter PD Arrays by tag
 
 ### 📦 Tools
-- 📤 Export PD Arrays/data to CSV/JSON (or full backup)
+- 📤 Export PD Arrays or full data to CSV/JSON
 - 📥 Import PD Arrays from CSV (optional)
-- 📊 Statistics and Recent Activity views
+- 📊 View statistics and recent activity
+- 🔄 Backup and restore full database
 
 ---
 
 ## 📊 How it Works
 
-- **Add PD Arrays** (with name, color, tags, session, and timeframes)
-- **Define Levels** (custom labels, types; add or edit at any time)
-- **Bulk manage values**: select a PD Array, input all level values, and save as a single timestamped entry
-- **View Level Entries**: grouped summary—each session shows all levels in one row with a timestamp
-- **Filter, search, and export your data anytime**
+- **Create PD Arrays** with session, timeframes, tags, and custom level structure
+- **Add and edit levels** freely, including reusable types (e.g. FVG, CE, etc.)
+- **Store level values** daily by entering all values for an array at once (with timestamp)
+- **View entries** in grouped format (1 row per session) with full filtering (date, price, type, label, tag)
+- **Export or import data** as needed for analysis or archiving
+- **Everything runs locally** — fast, private, and offline-ready
 
 ---
 

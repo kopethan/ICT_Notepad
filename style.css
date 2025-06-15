@@ -1,0 +1,68 @@
+/* 📁 PD Arrays (Indigo) */
+div[role="radiogroup"] label:first-child p {
+  font-size: 17px;
+  font-weight: bold;
+  color: #6c5ce7;
+  background-color: rgba(108, 92, 231, 0.08);
+  border: 1px solid rgba(108, 92, 231, 0.4);
+  padding: 6px 10px;
+  margin: 6px 0;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 🧱 Levels (Teal) */
+div[role="radiogroup"] label:nth-child(5) p {
+  font-size: 17px;
+  font-weight: bold;
+  color: #00b894;
+  background-color: rgba(0, 184, 148, 0.08);
+  border: 1px solid rgba(0, 184, 148, 0.4);
+  padding: 6px 10px;
+  margin: 6px 0;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 🏷️ Tags (Orange) */
+div[role="radiogroup"] label:nth-child(9) p {
+  font-size: 17px;
+  font-weight: bold;
+  color: #fd9644;
+  background-color: rgba(253, 150, 68, 0.08);
+  border: 1px solid rgba(253, 150, 68, 0.4);
+  padding: 6px 10px;
+  margin: 6px 0;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 📦 Tools (Purple) */
+div[role="radiogroup"] label:nth-child(12) p {
+  font-size: 17px;
+  font-weight: bold;
+  color: #a29bfe;
+  background-color: rgba(162, 155, 254, 0.08);
+  border: 1px solid rgba(162, 155, 254, 0.4);
+  padding: 6px 10px;
+  margin: 6px 0;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 🟢 Center-align radio circle with label text */
+div[role="radiogroup"] label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 📏 Consistent spacing in radio labels */
+div[role="radiogroup"] label div p {
+  margin: 0;
+  padding: 2px 0;
+}
