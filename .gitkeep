@@ -1,6 +1,0 @@
-mkdir -p db backups
-touch db/.gitkeep
-touch backups/.gitkeep
-
-git add db/.gitkeep backups/.gitkeep
-git commit -m "Preserve db and backups folders with .gitkeep"

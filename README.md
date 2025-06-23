@@ -70,7 +70,6 @@ ICT\_Notepad/
 ├── main.py                 # (optional) CLI
 ├── requirements.txt
 ├── README.md
-├── instructions.md         # Features list & plan
 ├── db/
 │   └── trading\_guide.db
 ├── backups/
@@ -155,3 +154,13 @@ Kopethan Arudshelvan (and OpenAI ChatGPT)
 - Suggestions and feedback are always welcome.
 
 ---
+
+
+## ❤️ Support This Project
+
+If you enjoy using **ICT_Notepad** and want to support its development, feel free to:
+
+- ☕ [Buy me a coffee](https://coff.ee/kopy)
+
+Your support helps keep this project free, open-source, and continuously improved.
+
