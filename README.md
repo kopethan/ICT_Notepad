@@ -124,9 +124,7 @@ ICT\_Notepad/
     ```bash
     streamlit run app.py
     ```
-
-Parfait ! Voici une section **🔧 Installation Guide (Cross-Platform)** que tu peux directement coller dans ton `README.md` :
-
+    
 ---
 
 ## 🔧 Installation Guide (Linux / macOS / Windows)
