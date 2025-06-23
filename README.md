@@ -163,4 +163,3 @@ If you enjoy using **ICT_Notepad** and want to support its development, feel fre
 - ☕ [Buy me a coffee](https://coff.ee/kopy)
 
 Your support helps keep this project free, open-source, and continuously improved.
-
