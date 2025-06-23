@@ -64,7 +64,7 @@ Useful for traders following Smart Money Concepts (SMC) or ICT methodology.
 
 ## 🗂️ Project Structure
 
-```bashj
+```bash
 ICT\_Notepad/
 ├── app.py                  # Streamlit entrypoint
 ├── main.py                 # (optional) CLI
@@ -101,6 +101,8 @@ ICT\_Notepad/
 
 **Quick Start**
 
+> 🆕 [Download latest release](https://github.com/kopethan/ICT_Notepad/releases)
+
 1. **Clone the repo:**
     ```bash
     git clone https://github.com/kopethan/ICT_Notepad.git
@@ -122,6 +124,71 @@ ICT\_Notepad/
     ```bash
     streamlit run app.py
     ```
+
+Parfait ! Voici une section **🔧 Installation Guide (Cross-Platform)** que tu peux directement coller dans ton `README.md` :
+
+---
+
+## 🔧 Installation Guide (Linux / macOS / Windows)
+
+ICT\_Notepad is built in Python and uses [Streamlit](https://streamlit.io). To avoid system errors (like `externally-managed-environment`), it's **strongly recommended** to install it inside a virtual environment.
+
+### 📦 Step-by-step
+
+#### 1. Clone the repository
+
+```bash
+git clone https://github.com/kopethan/ICT_Notepad.git
+cd ICT_Notepad
+```
+
+#### 2. Create a virtual environment
+
+* **Linux / macOS**
+
+  ```bash
+  python3 -m venv venv
+  source venv/bin/activate
+  ```
+
+* **Windows (CMD or PowerShell)**
+
+  ```bash
+  python -m venv venv
+  venv\Scripts\activate
+  ```
+
+> ✅ You should now see `(venv)` in your terminal prompt.
+
+#### 3. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+#### 4. Run the app
+
+```bash
+streamlit run app.py
+```
+
+---
+
+### ❓ Troubleshooting
+
+If you see this error:
+
+```
+error: externally-managed-environment
+```
+
+It means you're trying to install system-wide packages on a protected Python environment.
+**Solution**: Use the virtual environment as shown above.
+Alternatively (not recommended), use:
+
+```bash
+pip install -r requirements.txt --break-system-packages
+```
 
 ---
 
