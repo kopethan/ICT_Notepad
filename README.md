@@ -124,7 +124,7 @@ ICT\_Notepad/
     ```bash
     streamlit run app.py
     ```
-    
+
 ---
 
 ## 🔧 Installation Guide (Linux / macOS / Windows)
