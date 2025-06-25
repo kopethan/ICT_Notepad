@@ -263,80 +263,73 @@ elif menu == "📝 Edit PD Array":
     else:
         st.warning("No PD Arrays found.")
 
-# 5️⃣ View Levels (Grouped Summary View Only)
+# 5️⃣ View Levels (Grouped by Timestamp, Across All PD Arrays)
 elif menu == "📋 View Levels":
     st.header("📋 View Levels")
 
-    # --- FILTERS ---
-    st.subheader("🔍 Filter Options")
+    import datetime, html
+    from collections import defaultdict
 
-    import datetime
+    # ✅ Place these before the expander
     all_levels = session.query(level_utils.Level).all()
+    pd_arrays_all = pd_array_utils.list_pd_arrays(session)
     level_types_all = sorted(set([lvl.level_type for lvl in all_levels if lvl.level_type]))
     labels_all = sorted(set([lvl.label for lvl in all_levels if lvl.label]))
-    pd_arrays_all = pd_array_utils.list_pd_arrays(session)
-    array_options = ["All"] + [arr.name for arr in pd_arrays_all]
 
-    # Tags
-    all_tags = set(tag.name for arr in pd_arrays_all for tag in arr.tags)
-    selected_tags = st.multiselect("Tags (show PD Arrays with ANY of these tags)", sorted(all_tags))
+    # ✅ Then only keep UI widgets inside the expander
+    with st.expander("🔍 Show Filters", expanded=False):
+        all_tags = set(tag.name for arr in pd_arrays_all for tag in arr.tags)
+        selected_tags = st.multiselect("Tags (show PD Arrays with ANY of these tags)", sorted(all_tags))
 
-    # PD Array filter
-    selected_array = st.selectbox("PD Array", array_options)
-    selected_level_type = st.selectbox("Level Type", ["All"] + level_types_all)
-    selected_label = st.selectbox("Label", ["All"] + labels_all)
+        array_options = ["All"] + [arr.name for arr in pd_arrays_all]
+        selected_array = st.selectbox("PD Array", array_options)
+        selected_level_type = st.selectbox("Level Type", ["All"] + level_types_all)
+        selected_label = st.selectbox("Label", ["All"] + labels_all)
 
-    # Date filter
-    col1, col2 = st.columns(2)
-    start_date = col1.date_input("Start Date", value=None)
-    end_date = col2.date_input("End Date", value=None)
+        col1, col2 = st.columns(2)
+        start_date = col1.date_input("Start Date", value=None)
+        end_date = col2.date_input("End Date", value=None)
 
-    # Price filter (optional: filter on the *values* themselves)
-    col1, col2 = st.columns(2)
-    price_min_input = col1.text_input("Min Price", "")
-    price_max_input = col2.text_input("Max Price", "")
+        col1, col2 = st.columns(2)
+        price_min_input = col1.text_input("Min Price", "")
+        price_max_input = col2.text_input("Max Price", "")
 
-    # Filter PD Arrays by tag or name
+    price_min = price_max = None
+    try:
+        if price_min_input:
+            price_min = float(price_min_input)
+        if price_max_input:
+            price_max = float(price_max_input)
+    except Exception:
+        st.warning("Invalid price input. Please enter valid numbers.")
+
     def pdarray_tag_match(arr):
         if not selected_tags:
             return True
         arr_tags = set(tag.name for tag in arr.tags)
         return bool(arr_tags & set(selected_tags))
-    pd_arrays = [
-        arr for arr in pd_arrays_all
-        if (selected_array == "All" or arr.name == selected_array)
-        and pdarray_tag_match(arr)
-    ]
 
-    for pd_array in pd_arrays:
+    # Step 1: collect entries grouped by timestamp
+    grouped_sessions = defaultdict(list)
+
+    for pd_array in pd_arrays_all:
+        if not pdarray_tag_match(pd_array):
+            continue
+        if selected_array != "All" and pd_array.name != selected_array:
+            continue
+
         levels = level_utils.list_levels(session, pd_array.id)
         levels = [
             lvl for lvl in levels
             if (selected_level_type == "All" or lvl.level_type == selected_level_type) and
                (selected_label == "All" or lvl.label == selected_label)
         ]
-        if not levels:
-            continue
 
-        # -- Filtering helpers for date and price
-        # Parse price range if present
-        price_min = price_max = None
-        try:
-            if price_min_input:
-                price_min = float(price_min_input)
-            if price_max_input:
-                price_max = float(price_max_input)
-        except Exception:
-            st.warning("Invalid price input. Please enter valid numbers.")
-
-        # Get all entries for all levels in this PD Array
-        label_list = [lvl.label for lvl in levels]
-        all_entries = []
         for lvl in levels:
             for entry in lvl.entries:
-                # --- Filter by date if needed
-                ts_date = entry.timestamp.date()
-                in_date = True
+                ts = entry.timestamp.replace(microsecond=0)
+                ts_date = ts.date()
+
                 in_date = True
                 if start_date and end_date:
                     in_date = (start_date <= ts_date <= end_date)
@@ -345,70 +338,60 @@ elif menu == "📋 View Levels":
                 elif end_date:
                     in_date = (ts_date <= end_date)
 
-                # --- Filter by price if needed (if numeric and value not empty)
                 in_price = True
-                if price_min is not None and price_max is not None:
-                    try:
-                        v = float(entry.value)
+                try:
+                    v = float(entry.value)
+                    if price_min is not None and price_max is not None:
                         in_price = (price_min <= v <= price_max)
-                    except Exception:
-                        in_price = False
-                elif price_min is not None:
-                    try:
-                        v = float(entry.value)
-                        in_price = (abs(v - price_min) < 1e-8)
-                    except Exception:
-                        in_price = False
+                    elif price_min is not None:
+                        in_price = (v >= price_min)
+                    elif price_max is not None:
+                        in_price = (v <= price_max)
+                except Exception:
+                    in_price = False if (price_min or price_max) else True
 
                 if in_date and in_price:
-                    all_entries.append({
-                        "timestamp": entry.timestamp,
+                    grouped_sessions[ts].append({
                         "label": lvl.label,
                         "value": entry.value,
-                        "note": entry.note
+                        "note": entry.note,
+                        "pd_name": pd_array.name,
+                        "pd_color": pd_array.color or "#666",
+                        "pd_session": pd_array.session,
+                        "pd_date": pd_array.date,
+                        "tags": [tag.name for tag in pd_array.tags],
                     })
 
-        # Group entries by timestamp (save all group logic)
-        from collections import defaultdict
-        grouped = defaultdict(dict)
-        notes_by_ts = defaultdict(list)
-        for e in all_entries:
-            ts_key = e["timestamp"].replace(microsecond=0)
-            grouped[ts_key][e["label"]] = e["value"]
-            if e["note"]:
-                notes_by_ts[ts_key].append(e["note"])
+    # Step 2: render grouped sessions
+    for ts in sorted(grouped_sessions.keys(), reverse=True):
+        entries = grouped_sessions[ts]
+        pd_name = entries[0]["pd_name"]
+        pd_date = entries[0]["pd_date"]
+        pd_color = entries[0]["pd_color"]
+        pd_session = entries[0]["pd_session"]
+        tags = entries[0]["tags"]
 
-        session_groups = sorted(grouped.items(), key=lambda x: x[0], reverse=True)
+        summary_line = " • ".join([f'{e["label"]} ({e["value"]})' for e in entries])
+        notes = [e["note"] for e in entries if e["note"]]
+        entry_note = notes[0] if notes else ""
 
-        # Display
-        import html
-        color = pd_array.color if pd_array.color else "#666"
-        pd_name = html.escape(pd_array.name)
-        pd_date = pd_array.date if pd_array.date else ""
-        session_tag_html = f"{pd_name} ({pd_date})"
-
-        for ts, values in session_groups:
-            summary_line = " • ".join([f"{label} ({values.get(label, '-')})" for label in label_list])
-            entry_note = notes_by_ts[ts][0] if notes_by_ts[ts] else ""
-
-            st.markdown(
-                f"""
-                <div style='border-left: 6px solid {color}; padding: 0.75em 1em; margin-bottom: 0.5em; background-color: rgba(255,255,255,0.02); border-radius: 6px;'>
-                    <details>
-                        <summary style='font-weight: 600; font-size: 15px; cursor: pointer;'>
-                            🕒 {ts.strftime('%Y-%m-%d %H:%M:%S')} — {session_tag_html} → {summary_line}
-                        </summary>
-                        <div style='margin-top: 8px;'>
-                            <p><strong>Session:</strong> {pd_array.session}</p>
-                            <p><strong>Tags:</strong> {', '.join([tag.name for tag in pd_array.tags])}</p>
-                            {"<p><strong>PD Array Notes:</strong> " + html.escape(pd_array.notes) + "</p>" if pd_array.notes else ""}
-                            {"<p><strong>Entry Notes:</strong> " + html.escape(entry_note) + "</p>" if entry_note else ""}
-                        </div>
-                    </details>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+        st.markdown(
+            f"""
+            <div style='border-left: 6px solid {pd_color}; padding: 0.75em 1em; margin-bottom: 0.5em; background-color: rgba(255,255,255,0.02); border-radius: 6px;'>
+                <details>
+                    <summary style='font-weight: 600; font-size: 15px; cursor: pointer;'>
+                        {ts.strftime('%Y-%m-%d %H:%M:%S')} — {html.escape(pd_name)} ({pd_date or ""}) → {summary_line}
+                    </summary>
+                    <div style='margin-top: 8px;'>
+                        <p><strong>Session:</strong> {pd_session}</p>
+                        <p><strong>Tags:</strong> {', '.join(tags)}</p>
+                        {"<p><strong>Entry Notes:</strong> " + html.escape(entry_note) + "</p>" if entry_note else ""}
+                    </div>
+                </details>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
 # 📥 Bulk Manage Levels
 elif menu == "📥 Bulk Manage Levels":
