@@ -110,6 +110,16 @@ ICT\_Notepad/
     ```
 
 2. **Install requirements:**
+
+> ✅ Requires Python 3.10 or higher (tested with Python 3.11) \
+> Make sure pip is installed and working.
+
+#### Check your Python version :
+    ```bash
+    python --version
+    ```
+
+#### Install requirements :
     ```bash
     pip install -r requirements.txt
     ```
@@ -121,6 +131,9 @@ ICT\_Notepad/
     ```
 
 4. **Run the app:**
+
+> ⚠️ Make sure you're in the **/ICT_Notepad/** folder before running:
+
     ```bash
     streamlit run app.py
     ```
