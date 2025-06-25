@@ -90,96 +90,67 @@ ICT\_Notepad/
 
 ---
 
+
+````md
 ## 🚀 Quick Start
 
-> 🆕 [Download latest release](https://github.com/kopethan/ICT_Notepad/releases)
+> 🆕 [Download latest release](https://github.com/kopethan/ICT_Notepad/releases)  
+> ✅ Requires **Python 3.10+** (tested with Python 3.11) and **pip**
+
+---
 
 ### 1. Clone the repository
 
 ```bash
 git clone https://github.com/kopethan/ICT_Notepad.git
 cd ICT_Notepad
-```
+````
 
-### 2. Install dependencies
+---
 
-> ✅ Requires **Python 3.10 or higher** (tested with Python 3.11)
-> Make sure `pip` is installed and working.
+### 2. (Recommended) Create a virtual environment
 
-Check your Python version:
+#### Linux / macOS:
 
 ```bash
-python --version
+python3 -m venv venv
+source venv/bin/activate
 ```
 
-Install requirements:
+#### Windows:
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+> ✅ You should now see `(venv)` in your terminal
+
+---
+
+### 3. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Initialize the database (auto-generated)
+---
 
-> This step is automatic — the `db/trading_guide.db` and `backups/` folder will be created on first run.
-> You can also run it manually if needed:
+### 4. Initialize the database (auto-created on first run)
 
 ```bash
 python init_db.py
 ```
 
-### 4. Launch the app
-
-> ⚠️ Make sure you're in the `/ICT_Notepad/` folder before running:
-
-```bash
-streamlit run app.py
-```
-
 ---
 
-
-## 🔧 Installation Guide (Linux / macOS / Windows)
-
-ICT\_Notepad is built in Python and uses [Streamlit](https://streamlit.io). To avoid system errors (like `externally-managed-environment`), it's **strongly recommended** to install it inside a virtual environment.
-
-### 📦 Step-by-step
-
-#### 1. Clone the repository
-
-```bash
-git clone https://github.com/kopethan/ICT_Notepad.git
-cd ICT_Notepad
-```
-
-#### 2. Create a virtual environment
-
-* **Linux / macOS**
-
-  ```bash
-  python3 -m venv venv
-  source venv/bin/activate
-  ```
-
-* **Windows (CMD or PowerShell)**
-
-  ```bash
-  python -m venv venv
-  venv\Scripts\activate
-  ```
-
-> ✅ You should now see `(venv)` in your terminal prompt.
-
-#### 3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-#### 4. Run the app
+### 5. Run the app
 
 ```bash
 streamlit run app.py
 ```
+
+> 📂 Make sure you're in the `/ICT_Notepad/` directory before running.
 
 ---
 
@@ -191,15 +162,15 @@ If you see this error:
 error: externally-managed-environment
 ```
 
-It means you're trying to install system-wide packages on a protected Python environment.
-**Solution**: Use the virtual environment as shown above.
-Alternatively (not recommended), use:
+That means your system is protecting its Python install.
+✅ Use the virtual environment method shown above, or:
 
 ```bash
 pip install -r requirements.txt --break-system-packages
 ```
 
 ---
+
 
 ## 🧩 Why is this different?
 
