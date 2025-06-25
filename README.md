@@ -91,7 +91,6 @@ ICT\_Notepad/
 ---
 
 
-````md
 ## 🚀 Quick Start
 
 > 🆕 [Download latest release](https://github.com/kopethan/ICT_Notepad/releases)  
