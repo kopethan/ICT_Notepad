@@ -91,7 +91,6 @@ ICT\_Notepad/
 ---
 
 
-````md
 ## 🚀 Quick Start
 
 > 🆕 [Download latest release](https://github.com/kopethan/ICT_Notepad/releases)  
@@ -104,7 +103,7 @@ ICT\_Notepad/
 ```bash
 git clone https://github.com/kopethan/ICT_Notepad.git
 cd ICT_Notepad
-````
+```
 
 ---
 
