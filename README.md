@@ -92,53 +92,51 @@ ICT\_Notepad/
 
 ## 🚀 Quick Start
 
----
-
-> **Note:**  
-> The database (`db/trading_guide.db`) and `backups/` folder are created automatically when you first run the app—no manual setup needed!
-
----
-
-**Quick Start**
-
 > 🆕 [Download latest release](https://github.com/kopethan/ICT_Notepad/releases)
 
-1. **Clone the repo:**
-    ```bash
-    git clone https://github.com/kopethan/ICT_Notepad.git
-    cd ICT_Notepad
-    ```
+### 1. Clone the repository
 
-2. **Install requirements:**
+```bash
+git clone https://github.com/kopethan/ICT_Notepad.git
+cd ICT_Notepad
+```
 
-> ✅ Requires Python 3.10 or higher (tested with Python 3.11) \
-> Make sure pip is installed and working.
+### 2. Install dependencies
 
-#### Check your Python version :
-    ```bash
-    python --version
-    ```
+> ✅ Requires **Python 3.10 or higher** (tested with Python 3.11)
+> Make sure `pip` is installed and working.
 
-#### Install requirements :
-    ```bash
-    pip install -r requirements.txt
-    ```
+Check your Python version:
 
-3. **Initialize the database:**  
-   *(This is automatic! When you run the app, `db/trading_guide.db` and the `backups/` folder will be created if they don’t exist.)*
-    ```bash
-    python init_db.py
-    ```
+```bash
+python --version
+```
 
-4. **Run the app:**
+Install requirements:
 
-> ⚠️ Make sure you're in the **/ICT_Notepad/** folder before running:
+```bash
+pip install -r requirements.txt
+```
 
-    ```bash
-    streamlit run app.py
-    ```
+### 3. Initialize the database (auto-generated)
+
+> This step is automatic — the `db/trading_guide.db` and `backups/` folder will be created on first run.
+> You can also run it manually if needed:
+
+```bash
+python init_db.py
+```
+
+### 4. Launch the app
+
+> ⚠️ Make sure you're in the `/ICT_Notepad/` folder before running:
+
+```bash
+streamlit run app.py
+```
 
 ---
+
 
 ## 🔧 Installation Guide (Linux / macOS / Windows)
 
