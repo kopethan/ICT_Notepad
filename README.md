@@ -92,6 +92,7 @@ ICT\_Notepad/
 
 ## 🚀 Quick Start
 
+<<<<<<< HEAD
 ---
 
 > **Note:**  
@@ -101,14 +102,16 @@ ICT\_Notepad/
 
 > 🆕 [Download latest release](https://github.com/kopethan/ICT_Notepad/releases)
 
-#### 1. Clone the repository
+> 🆕 [Download latest release](https://github.com/kopethan/ICT_Notepad/releases)
+
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/kopethan/ICT_Notepad.git
 cd ICT_Notepad
 ```
 
-#### 2. Install dependencies
+### 2. Install dependencies
 
 > ✅ Requires **Python 3.10 or higher** (tested with Python 3.11)
 > Make sure `pip` is installed and working.
@@ -125,7 +128,7 @@ Install requirements:
 pip install -r requirements.txt
 ```
 
-#### 3. Initialize the database (auto-generated)
+### 3. Initialize the database (auto-generated)
 
 > This step is automatic — the `db/trading_guide.db` and `backups/` folder will be created on first run.
 > You can also run it manually if needed:
@@ -134,7 +137,7 @@ pip install -r requirements.txt
 python init_db.py
 ```
 
-#### 4. Launch the app
+### 4. Launch the app
 
 > ⚠️ Make sure you're in the `/ICT_Notepad/` folder before running:
 
@@ -143,6 +146,7 @@ streamlit run app.py
 ```
 
 ---
+
 
 ## 🔧 Installation Guide (Linux / macOS / Windows)
 
