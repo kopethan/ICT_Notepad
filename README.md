@@ -104,7 +104,7 @@ ICT\_Notepad/
 ```bash
 git clone https://github.com/kopethan/ICT_Notepad.git
 cd ICT_Notepad
-````
+```
 
 ---
 
