@@ -41,7 +41,7 @@ div[role="radiogroup"] label:nth-child(9) p {
 }
 
 /* 📦 Tools (Purple) */
-div[role="radiogroup"] label:nth-child(12) p {
+div[role="radiogroup"] label:nth-child(11) p {
   font-size: 17px;
   font-weight: bold;
   color: #a29bfe;

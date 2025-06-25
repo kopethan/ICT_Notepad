@@ -66,8 +66,7 @@ menu = st.sidebar.radio("Go to", [
     "🧾 Edit Level Entries",
 
     "★ Tags",
-    "🛠️ Manage Tags",
-    "✏️ Edit PD Array Tags",
+    "🏷️ Tags",
 
     "★ Tools",
     "📤 Export PD Array",
@@ -491,9 +490,27 @@ elif menu == "🧾 Edit Level Entries":
                     session.commit()
                     st.warning("❌ Entire entry group deleted.")
                     st.rerun()
-# 9️⃣ Manage Tags
-elif menu == "🛠️ Manage Tags":
+# 9️⃣ 🏷️ Tags
+elif menu == "🏷️ Tags":
     st.header("🏷️ Manage Tags")
+
+    # ➕ Add Tag Section
+    with st.expander("➕ Add New Tag", expanded=True):
+        new_tag_name = st.text_input("Tag Name", "")
+        if st.button("Add Tag"):
+            if not new_tag_name.strip():
+                st.warning("Please enter a valid tag name.")
+            else:
+                existing = session.query(tag_utils.Tag).filter_by(name=new_tag_name.strip()).first()
+                if existing:
+                    st.warning("This tag already exists.")
+                else:
+                    tag_utils.get_or_create_tag(session, new_tag_name.strip())
+                    session.commit()
+                    st.success(f"✅ Tag '{new_tag_name}' added.")
+                    st.rerun()
+
+    # 📋 List Existing Tags
     tags = tag_utils.list_tags(session)
     if not tags:
         st.info("No Tags found.")
@@ -503,35 +520,16 @@ elif menu == "🛠️ Manage Tags":
             data.append([tag.id, tag.name, len(tag.pd_arrays)])
         df = pd.DataFrame(data, columns=["ID", "Tag Name", "Linked PD Arrays"])
         st.dataframe(df)
+
         tag_options = {f"{tag.id} - {tag.name}": tag.id for tag in tags}
         selected_tag = st.selectbox("Select Tag to delete", list(tag_options.keys()))
         tag_id = tag_options[selected_tag]
+
         if st.button("Delete Tag"):
             tag_utils.delete_tag(session, tag_id)
-            st.success("Tag deleted!")
-
-# 🔟 Edit PD Array Tags
-elif menu == "🏷️ ✏️ Edit PD Array Tags":
-    st.header("✏️ Edit PD Array Tags")
-    pd_arrays = pd_array_utils.list_pd_arrays(session)
-    array_options = {f"{array.id} - {array.name} ({array.date})": array.id for array in pd_arrays}
-    if array_options:
-        selected_array = st.selectbox("Select PD Array", list(array_options.keys()))
-        pd_array_id = array_options[selected_array]
-        pd_array = session.query(pd_array_utils.PDArray).get(pd_array_id)
-        existing_tags = [tag.name for tag in pd_array.tags]
-        all_tags = tag_utils.list_tags(session)
-        all_tag_names = sorted([tag.name for tag in all_tags])
-        selected_tags = st.multiselect("Select Tags", all_tag_names, default=existing_tags)
-        if st.button("Update Tags"):
-            pd_array.tags.clear()
-            for tag_name in selected_tags:
-                tag = tag_utils.get_or_create_tag(session, tag_name)
-                pd_array.tags.append(tag)
             session.commit()
-            st.success("Tags updated!")
-    else:
-        st.warning("No PD Arrays found.")
+            st.success("Tag deleted!")
+            st.rerun()
 
 # 📦 Tools
 elif menu == "📤 Export PD Array":
